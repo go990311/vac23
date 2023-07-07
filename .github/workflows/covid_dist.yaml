@@ -3,6 +3,7 @@ name: Render library update
 on:
   schedule:
     - cron: "*/5 * * * *"
+
 jobs:
   render:
     name: Render my document
