@@ -1,0 +1,71 @@
+
+
+library(tidyverse)
+library(plotly)
+library(RSocrata)
+
+
+# READ DATA
+
+# covid_df <- read.csv("https://data.cdc.gov/resource/5jp2-pgaw.csv")
+
+covid_df <- read.socrata("https://data.cdc.gov/resource/5jp2-pgaw.csv")
+
+# Data fetch timestamp
+covid_df$dtstamp = Sys.time()
+
+
+# DATA CLEANING
+
+covid_df %>%
+  select(
+    -c(1:3, 6, 10:22, 25, 26, 29:33)
+  ) -> covid.df1
+
+# View the original column names
+print(colnames(covid.df1))
+
+# Rename column names
+covid.df2 <- covid.df1 %>%
+  rename(
+    "Medical_provider" = "loc_name",
+    "Street" = "loc_admin_street1",
+    "City" = "loc_admin_city",
+    "State" = "loc_admin_state",
+    "Zip" = "loc_admin_zip",
+    "Vaccine_type" = "med_name",
+    "Availability" = "in_stock",
+    "Lat" = "latitude",
+    "Long" = "longitude")
+
+# Convert state column to uppercase for consistency
+covid.df2$State <- toupper(covid.df2$State)
+
+
+# DATA EXPLORATION
+## What are the states and territories in US with the highest number of vaccination providers?
+
+# Explore the distribution of providers by states and territories
+state_counts_all <- covid.df2 %>%
+  group_by(State) %>%
+  summarise(provider_count = n())
+
+# VISUALIZATION
+
+# Plotting the distribution of vaccine providers by state and territories
+plot <- ggplot(state_counts_all, aes(x = State, y = provider_count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "State", y = "Provider Count") +
+  labs(title = "Vaccination Providers by State and Territories") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5))
+
+# Convert ggplot to plotly object
+plotly_plot <- ggplotly(plot)
+
+# Display the interactive plot
+plotly_plot
+
+ggsave("myplot.png", plot = plot)
+
+
